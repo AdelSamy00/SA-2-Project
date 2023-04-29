@@ -1,0 +1,55 @@
+version: "3"
+services:
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:latest'
+    container_name: 'kafka'
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ENABLE_KRAFT=no
+      - KAFKA_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ADVERTISED_LISTENERS:=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE : sa2
+      MYSQL_ROOT_PASSWORD : root
+      MYSQL_USER: adel
+      MYSQL_PASSWORD: 123
+    ports:
+      - '3306:3306'
+      
+  customer:
+    build: /sa2-project/customer
+    image: sa2/customer
+    environment:
+      DB_HOST: db
+      KAFKA_HOST: kafka:9092
+    ports:
+      - 5000:5000
+    depends_on:
+      - db
+  marketer:
+    build: /sa2-project/marketer
+    image: sa2/marketer
+    environment:
+      KAFKA_HOST: kafka:9092
+    ports:
+      - 5001:5001
+    depends_on:
+      - db
+
+
+
